@@ -25,7 +25,7 @@ pip install NoteClient
 ## Quick Example
 
 ```
-from Note_Client import Note
+from note_client import Note
 
 EMAIL = 'your email'
 PASSWORD = 'your password'
