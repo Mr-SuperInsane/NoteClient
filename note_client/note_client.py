@@ -7,11 +7,15 @@ from selenium.webdriver.firefox.options import Options
 from janome.tokenizer import Tokenizer
 from time import sleep
 from random import randint
-import pyperclip
-import pyautogui
-import os
+from PIL import Image
 import builtins
 import re
+import pyautogui
+import pyperclip
+import os
+import io
+import win32clipboard
+
 
 class Note:
 
@@ -276,6 +280,26 @@ class Note:
                     sleep(0.5)
                     active_element = driver.execute_script("return document.activeElement;")
                     active_element.send_keys(Keys.ENTER)
+            elif text.startswith("<IMAGE>: "):
+                # Lines specified as "<IMAGE>: path" will load and paste the image from the local path
+                insert_image_path = text[len("<IMAGE>: "):]
+                if not os.path.exists(insert_image_path):
+                    continue
+
+                image = Image.open(insert_image_path)
+                output = io.BytesIO()
+                image.convert("RGB").save(output, "BMP")
+                data = output.getvalue()[14:]
+                output.close()
+
+                win32clipboard.OpenClipboard()
+                win32clipboard.EmptyClipboard()
+                win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
+                win32clipboard.CloseClipboard()
+
+                active_element = driver.execute_script("return document.activeElement;")
+                active_element.send_keys(Keys.CONTROL, 'v')
+                sleep(3)
 
             else:
                 sleep(0.1)

@@ -61,3 +61,12 @@ $$
 10 & Mexico & 129,406,736 \newline\hline
 \end{array}
 $$
+
+## How to insert Image
+You can insert an image into an article by specifying "<IMAGE>: {absolute path of the image}".
+
+<IMAGE>: C:\Windows\Web\Wallpaper\Windows\img0.jpg
+The block immediately following <IMAGE> is the image caption.
+This line is part of the caption.
+
+The next line after a blank line is outside the block.
