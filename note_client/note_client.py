@@ -30,7 +30,7 @@ class Note:
     def __str__(self):
         return f"Email : {self.email} / User ID : {self.user_id}"
 
-    def create_article(self, title:str, input_tag_list:list, image_index='random', image_abs_path:str=None, post_setting:bool=False, file_name:str=None, headless:bool=True, text:str=None):
+    def create_article(self, title:str, input_tag_list:list, image_index='random', image_abs_path:str=None, post_setting:bool=False, file_name:str=None, headless:bool=True, text:str=None, price:int=None):
         '''
         Create new article
         -----
@@ -42,6 +42,7 @@ class Note:
         > post_setting : save draft or post (default : save draft)
         > headless : show or not show page (default : not show)
         > text : archicle content text (default : None)
+        > price : price for paid article (if post_setting is True and contents has <PAID_LINE>)
         '''
 
         if title and isinstance(input_tag_list, list) and (image_abs_path is None or os.path.exists(image_abs_path)) and (image_index=='random' or isinstance(image_index, int) or isinstance(image_index, type(None))) and (file_name is not None or text is not None):
@@ -56,6 +57,8 @@ class Note:
 
         driver = webdriver.Firefox(options=options)
         driver.get('https://note.com/login?redirectPath=%2Fnotes%2Fnew')
+        driver.minimize_window()  # Bring to the front by minimizing and then maximizing
+        driver.maximize_window()
 
         wait = WebDriverWait(driver, 10)
 
@@ -300,6 +303,21 @@ class Note:
                 active_element = driver.execute_script("return document.activeElement;")
                 active_element.send_keys(Keys.CONTROL, 'v')
                 sleep(3)
+            elif text == "<PAID_LINE>":
+                # "<PAID_LINE>" sets a paid line
+                sleep(0.5)
+                button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[4]/button")))
+                button.click()
+                sleep(0.5)
+                button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[4]/div/button[13]")))
+                button.click()
+                sleep(1)
+                # Click the blank area in bottom of the screen to move to a new block
+                driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
+                wnd = pyautogui.getWindowsWithTitle(title)[0]
+                sleep(1)
+                pyautogui.click(wnd.midbottom.x, wnd.midbottom.y - 20)
+                sleep(0.5)
 
             else:
                 sleep(0.1)
@@ -412,15 +430,35 @@ class Note:
                 input.send_keys(Keys.SPACE)
 
             button = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[1]/div/button")))
-            button.click()
-            res = {
-                'run':'success',
-                'title':title,
-                'file_path':file_name,
-                'tag_list':input_tag_list,
-                'post_setting':'Public',
-                'post_url':post_url
-            }
+            if button.text != "有料エリア設定":
+                # For free articles, post at this timing
+                button.click()
+                res = {
+                    'run':'success',
+                    'title':title,
+                    'file_path':file_name,
+                    'tag_list':input_tag_list,
+                    'post_setting':'Public',
+                    'post_url':post_url
+                }
+            else:
+                # Set the price for paid articles
+                price_textbox = wait.until(EC.presence_of_element_located((By.ID, 'price')))
+                price_textbox.clear()
+                price_textbox.send_keys(price)
+                sleep(0.1)
+                button.click()
+                sleep(1)
+                button.click()
+                res = {
+                    'run':'success',
+                    'title':title,
+                    'file_path':file_name,
+                    'tag_list':input_tag_list,
+                    'price':price,
+                    'post_setting':'Public',
+                    'post_url':post_url
+                }
         else:
             button = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[1]/header/div/div[2]/div/button[1]")))
             button.click()

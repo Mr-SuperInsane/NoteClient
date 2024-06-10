@@ -70,3 +70,10 @@ The block immediately following <IMAGE> is the image caption.
 This line is part of the caption.
 
 The next line after a blank line is outside the block.
+
+## How to set paid line
+You can set a paid line by specifying <PAID_LINE> on a single line.
+
+<PAID_LINE>
+
+When specifying a paid line and setting the post_setting argument of Note.create_article() to True, you must specify the price using the price argument.
