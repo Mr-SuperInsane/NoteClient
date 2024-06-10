@@ -335,12 +335,12 @@ class Note:
             # Operation of "Open File Dialog"
             wnd = pyautogui.getWindowsWithTitle("File Upload")[0]
             pyautogui.click(wnd.left + 5, wnd.top + 5)
-            sleep(0.1)
+            sleep(0.5)
             pyperclip.copy(image_abs_path)  # Via clipboard for Japanese input (pyautogui does not support Japanese input)
             pyautogui.hotkey("ctrl", "v")
-            sleep(0.1)
+            sleep(0.5)
             pyautogui.press("enter")
-            sleep(1)
+            sleep(3)
 
             button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[4]/div/div/div[3]/button[2]")))
             button.click()

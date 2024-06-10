@@ -25,6 +25,7 @@ pip install NoteClient
 ## Quick Example
 
 ```
+import os
 from note_client import Note
 
 EMAIL = 'your email'
@@ -34,6 +35,7 @@ USER_ID = 'your user_id'
 TITLE = 'Sample'
 CONTENT_PATH = 'content.txt'
 TAG_LIST = ['sample_tag']
+ARTICLE_IMAGE = os.path.abspath('sample_logo.png')
 
 # > If an image is specified, the index number is entered; if not, no description is given.
 # INDEX = 0
@@ -47,7 +49,7 @@ TAG_LIST = ['sample_tag']
 # To specify the above three options, add them to the function arguments.
 
 note = Note(email=EMAIL, password=PASSWORD, user_id=USER_ID)
-print(note.create_article(title=TITLE, file_name=CONTENT_PATH, input_tag_list=TAG_LIST, image_index=None))
+print(note.create_article(title=TITLE, file_name=CONTENT_PATH, input_tag_list=TAG_LIST, image_abs_path=ARTICLE_IMAGE, image_index=None))
 
 ## If successful(Public).
 # {'run':'success','title':'Sample','file_path':'content.txt','tag_list':['sample_tag'],'post_setting':'Public','post_url':'https://note.com/USER_ID/n/abc123'}
