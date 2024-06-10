@@ -7,6 +7,9 @@ from selenium.webdriver.firefox.options import Options
 from janome.tokenizer import Tokenizer
 from time import sleep
 from random import randint
+import pyperclip
+import pyautogui
+import os
 import builtins
 import re
 
@@ -23,20 +26,21 @@ class Note:
     def __str__(self):
         return f"Email : {self.email} / User ID : {self.user_id}"
 
-    def create_article(self, title:str, input_tag_list:list, image_index='random', post_setting:bool=False, file_name:str=None, headless:bool=True, text:str=None):
+    def create_article(self, title:str, input_tag_list:list, image_index='random', image_abs_path:str=None, post_setting:bool=False, file_name:str=None, headless:bool=True, text:str=None):
         '''
         Create new article
         -----
         > title : article title
         > file_name : article content file ( default : None )
         > tag_list : tag of article
-        > image_index : index number of the article image
+        > image_index : index number of the article image (only valid if image_abs_path is None)
+        > image_abs_path : absolute path of the article image
         > post_setting : save draft or post (default : save draft)
         > headless : show or not show page (default : not show)
         > text : archicle content text (default : None)
         '''
 
-        if title and isinstance(input_tag_list, list) and (image_index=='random' or isinstance(image_index, int) or isinstance(image_index, type(None))) and (file_name is not None or text is not None):
+        if title and isinstance(input_tag_list, list) and (image_abs_path is None or os.path.exists(image_abs_path)) and (image_index=='random' or isinstance(image_index, int) or isinstance(image_index, type(None))) and (file_name is not None or text is not None):
             pass
         else:
             return 'Required data is missing.'
@@ -294,46 +298,72 @@ class Note:
         driver.execute_script('window.scrollTo(0, 0)')
         sleep(1)
 
-        t = Tokenizer()
-        keywords = [token.surface for token in t.tokenize(title) if token.part_of_speech.startswith('名詞,一般') or token.part_of_speech.startswith('名詞,固有名詞') or token.part_of_speech.startswith('名詞,サ変接続')]
-        search_word = builtins.max(keywords, key=len) if keywords else None
-
-        sleep(0.5)
-        button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[1]/main/div[1]/button")))
-        button.click()
-        sleep(0.5)
-        button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[1]/main/div[1]/div/div[2]/button")))
-        button.click()
-        sleep(1)
-        button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div[1]/div/div[2]/button")))
-        button.click()
-        sleep(0.5)
-        keyword = driver.execute_script("return document.activeElement;")
-        keyword.send_keys(search_word)
-        sleep(2)
-        button = driver.find_element(By.XPATH, "/html/body/div[5]/div/div/div[1]/div/div[2]/button")
-        button.click()
-        sleep(3)
-        parent_element = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div[2]")))
-        img_elements = parent_element.find_elements(By.TAG_NAME, 'img')
-        if isinstance(image_index, int) and 0 <= int(image_index)<= int(len(img_elements)-1):
-            index = image_index
-        else:
-            max = len(img_elements)-1
-            if max >= 0:
-                index = randint(0,max)
-            else:
-                index = -1
-        if index < 0 or isinstance(image_index, type(None)):
-            keyword.send_keys(Keys.ESCAPE)
-        else:
-            img_elements[index].click()
-            button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div[2]/div/div[2]/div/div[5]/button[2]")))
+        if image_abs_path is not None:
+            # Select image from image_abs_path
+            sleep(0.5)
+            button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[1]/main/div[1]/button")))
             button.click()
-            sleep(2)
+            sleep(0.5)
+            button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[1]/main/div[1]/div/div[1]/button")))
+            button.click()
+            sleep(1)
+
+            # Operation of "Open File Dialog"
+            wnd = pyautogui.getWindowsWithTitle("File Upload")[0]
+            pyautogui.click(wnd.left + 5, wnd.top + 5)
+            sleep(0.1)
+            pyperclip.copy(image_abs_path)  # Via clipboard for Japanese input (pyautogui does not support Japanese input)
+            pyautogui.hotkey("ctrl", "v")
+            sleep(0.1)
+            pyautogui.press("enter")
+            sleep(1)
+
             button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[4]/div/div/div[3]/button[2]")))
             button.click()
             sleep(10)
+
+        else:
+            # Select image based on image_index
+            t = Tokenizer()
+            keywords = [token.surface for token in t.tokenize(title) if token.part_of_speech.startswith('名詞,一般') or token.part_of_speech.startswith('名詞,固有名詞') or token.part_of_speech.startswith('名詞,サ変接続')]
+            search_word = builtins.max(keywords, key=len) if keywords else None
+
+            sleep(0.5)
+            button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[1]/main/div[1]/button")))
+            button.click()
+            sleep(0.5)
+            button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[1]/main/div[1]/div/div[2]/button")))
+            button.click()
+            sleep(1)
+            button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div[1]/div/div[2]/button")))
+            button.click()
+            sleep(0.5)
+            keyword = driver.execute_script("return document.activeElement;")
+            keyword.send_keys(search_word)
+            sleep(2)
+            button = driver.find_element(By.XPATH, "/html/body/div[5]/div/div/div[1]/div/div[2]/button")
+            button.click()
+            sleep(3)
+            parent_element = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div[2]")))
+            img_elements = parent_element.find_elements(By.TAG_NAME, 'img')
+            if isinstance(image_index, int) and 0 <= int(image_index)<= int(len(img_elements)-1):
+                index = image_index
+            else:
+                max = len(img_elements)-1
+                if max >= 0:
+                    index = randint(0,max)
+                else:
+                    index = -1
+            if index < 0 or isinstance(image_index, type(None)):
+                keyword.send_keys(Keys.ESCAPE)
+            else:
+                img_elements[index].click()
+                button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div[2]/div/div[2]/div/div[5]/button[2]")))
+                button.click()
+                sleep(2)
+                button = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[4]/div/div/div[3]/button[2]")))
+                button.click()
+                sleep(10)
 
         if post_setting:
             button = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div[3]/div[1]/div[2]/div[1]/header/div/div[2]/div/button[2]")))
