@@ -36,7 +36,7 @@ class Note:
         > text : archicle content text (default : None)
         '''
 
-        if title and input_tag_list and isinstance(input_tag_list, list) and (image_index=='random' or isinstance(image_index, int) or isinstance(image_index, type(None))) and (file_name is not None or text is not None):
+        if title and isinstance(input_tag_list, list) and (image_index=='random' or isinstance(image_index, int) or isinstance(image_index, type(None))) and (file_name is not None or text is not None):
             pass
         else:
             return 'Required data is missing.'
